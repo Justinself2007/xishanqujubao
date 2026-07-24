@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>西山居民养老待遇计算器</title>
+    <style>
+        :root {
+            --brand-deep: #A8341A;
+            --brand: #D45326;
+            --brand-light: #EE8A48;
+            --gold: #D99A3A;
+            --warm: #FFF2E2;
+            --card: #FFFBF5;
+            --ink: #4A2E1F;
+            --ink-soft: #8B6B57;
+            --line: #F0DCC4;
+            --danger: #C8161D;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Heiti SC", sans-serif;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            font-size: 16px;
+            background: linear-gradient(180deg, rgba(255, 220, 170, 0.68) 0%, rgba(255, 240, 218, 0.78) 50%, rgba(255, 248, 238, 0.86) 100%), url('https://aka.doubaocdn.com/s/neax1woydf') center top/cover no-repeat fixed;
+            background-blend-mode: normal;
+        }
+
+        /* 右上角卡通娃娃（调淡） */
+        .mascot {
+            position: fixed;
+            top: 6px;
+            right: 6px;
+            width: 104px;
+            z-index: 99;
+            filter: drop-shadow(0 4px 10px rgba(120, 50, 20, 0.18));
+            pointer-events: none;
+            opacity: 0.72;
+        }
+
+        .wrap {
+            max-width: 540px;
+            margin: 0 auto;
+            padding: 0 14px 56px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            position: relative;
+            background: linear-gradient(135deg, var(--brand-deep) 0%, var(--brand) 55%, var(--brand-light) 100%);
+            color: #fff;
+            padding: 28px 20px 52px;
+            text-align: center;
+            border-radius: 0 0 28px 28px;
+            box-shadow: 0 10px 28px rgba(168, 52, 26, 0.25);
+            overflow: hidden;
+            margin: 0 -14px;
+        }
+        .header::before {
+            content: "";
+            position: absolute;
+            left: -40px;
+            bottom: -30px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 200, 120, 0.35) 0%, transparent 70%);
+        }
+        .header::after {
+            content: "";
+            position: absolute;
+            right: -50px;
+            top: -40px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 220, 160, 0.25) 0%, transparent 70%);
+        }
+        .badge {
+            display: inline-block;
+            font-size: 13px;
+            letter-spacing: 3px;
+            background: rgba(255, 255, 255, 0.22);
+            padding: 5px 14px;
+            border-radius: 22px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 2;
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: .95;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card);
+            border-radius: 16px;
+            margin: -30px 4px 18px;
+            position: relative;
+            z-index: 3;
+            box-shadow: 0 8px 22px rgba(140, 70, 30, 0.13);
+            padding: 6px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 14px 0;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--ink-soft);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, var(--brand-light), var(--brand));
+            color: #fff;
+            box-shadow: 0 5px 14px rgba(212, 83, 38, .32);
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 20px 18px;
+            box-shadow: 0 6px 20px rgba(140, 70, 30, 0.09);
+            margin-bottom: 18px;
+            border: 1px solid rgba(240, 210, 180, 0.55);
+        }
+        .field {
+            margin-bottom: 18px;
+        }
+        .field:last-child {
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--ink);
+        }
+        .hint {
+            font-size: 13px;
+            color: var(--ink-soft);
+            font-weight: 400;
+            margin-left: 6px;
+        }
+        .warn-note {
+            margin-top: 9px;
+            font-size: 13px;
+            color: var(--danger);
+            font-weight: 700;
+            line-height: 1.6;
+        }
+        .warn-note .star {
+            font-weight: 900;
+            margin-right: 2px;
+        }
+
+        select,
+        input[type=number] {
+            width: 100%;
+            padding: 13px 15px;
+            font-size: 16px;
+            color: var(--ink);
+            border: 2px solid var(--line);
+            border-radius: 12px;
+            background: #FFF8EE;
+            outline: none;
+            transition: .2s;
+            appearance: none;
+            font-weight: 500;
+        }
+        select:focus,
+        input:focus {
+            border-color: var(--brand-light);
+            background: #fff;
+        }
+        .select-wrap {
+            position: relative;
+        }
+        .select-wrap::after {
+            content: "▾";
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--brand);
+            pointer-events: none;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* 有/无 单选 */
+        .radio-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .radio-row .rbtn {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid var(--line);
+            border-radius: 12px;
+            background: #FFF8EE;
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: .15s;
+        }
+        .radio-row .rbtn.active {
+            border-color: var(--brand);
+            background: linear-gradient(135deg, #FFF0E0, #FFE2CC);
+            color: var(--brand-deep);
+            font-weight: 800;
+        }
+
+        /* 资助子面板 */
+        .subsidy-panel {
+            margin-top: 10px;
+            padding: 14px 14px 2px;
+            background: linear-gradient(180deg, #FFF6EA, #FFFDF7);
+            border: 1.5px dashed #E8B98A;
+            border-radius: 12px;
+            display: none;
+        }
+        .subsidy-panel.show {
+            display: block;
+            animation: fadeIn .25s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+        .subsidy-panel .s-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--brand-deep);
+            margin-bottom: 10px;
+        }
+        .sub-field {
+            margin-bottom: 14px;
+        }
+        .sub-field:last-child {
+            margin-bottom: 8px;
+        }
+        .sub-field .sublabel {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: var(--ink);
+        }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .stepper button {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--line);
+            background: #FFF8EE;
+            font-size: 24px;
+            color: var(--brand);
+            cursor: pointer;
+            flex: none;
+            font-weight: 700;
+        }
+        .stepper button:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+        .stepper button:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+        .stepper input {
+            border-radius: 0;
+            text-align: center;
+            border-left: none;
+            border-right: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 19px;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--brand-light), var(--brand-deep));
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            letter-spacing: 4px;
+            box-shadow: 0 8px 20px rgba(212, 83, 38, .33);
+            transition: .15s;
+        }
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 10px rgba(212, 83, 38, .3);
+        }
+
+        /* 逐年 */
+        .yr-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .yr-head .ttl {
+            font-size: 17px;
+            font-weight: 800;
+        }
+        .yr-head .cnt {
+            font-size: 14px;
+            color: var(--ink-soft);
+        }
+        .yr-head .cnt b {
+            color: var(--brand);
+            font-size: 18px;
+        }
+
+        .quick-bar {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .quick-bar .qcol {
+            flex: 1;
+            min-width: 130px;
+        }
+        .quick-bar .qcol .qname {
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .quick-bar select {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 14px;
+        }
+        .quick-bar .qbtn {
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--brand-deep);
+            background: #FFE9D3;
+            border: 1px solid #F0C9A0;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .yr-list {
+            max-height: 420px;
+            overflow-y: auto;
+            margin: 0 -4px;
+            padding: 0 4px;
+        }
+        .yr-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--line);
+        }
+        .yr-row .no {
+            width: 48px;
+            font-size: 13px;
+            color: var(--ink-soft);
+            flex: none;
+            font-weight: 700;
+        }
+        .yr-row .no b {
+            color: var(--brand);
+            font-size: 15px;
+        }
+        .yr-row .yrcol {
+            flex: 1;
+            min-width: 0;
+        }
+        .yr-row .yrcol .yname {
+            font-size: 11px;
+            color: var(--ink-soft);
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+        .yr-row .yrcol select {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+        .yr-row .del {
+            width: 32px;
+            height: 32px;
+            flex: none;
+            border: none;
+            background: #FBE6D5;
+            color: var(--brand);
+            border-radius: 9px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: 700;
+            margin-top: 14px;
+        }
+
+        .yr-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .yr-actions button {
+            flex: 1;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 11px;
+            cursor: pointer;
+            border: 2px dashed var(--brand-light);
+            background: #FFF4E6;
+            color: var(--brand-deep);
+        }
+
+        /* 结果 */
+        .result {
+            display: none;
+        }
+        .result.show {
+            display: block;
+            animation: fadeUp .35s ease;
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+        .result-card {
+            background: linear-gradient(160deg, #FFF5E6 0%, #FFE6D0 100%);
+            border: 2px solid #F0C89A;
+            border-radius: 20px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 10px 28px rgba(168, 52, 26, .16);
+        }
+        .result-card .rt {
+            font-size: 15px;
+            color: var(--ink-soft);
+            font-weight: 600;
+        }
+        .big {
+            font-size: 50px;
+            font-weight: 900;
+            color: var(--brand-deep);
+            margin: 8px 0 4px;
+            line-height: 1;
+        }
+        .big small {
+            font-size: 20px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        .yr-total {
+            font-size: 14px;
+            color: var(--ink-soft);
+            margin-bottom: 18px;
+            font-weight: 500;
+        }
+        .yr-total b {
+            color: var(--brand);
+            font-weight: 800;
+            font-size: 16px;
+        }
+        .breakdown {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .bd {
+            flex: 1;
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 8px;
+            border: 1.5px solid var(--line);
+        }
+        .bd .k {
+            font-size: 13px;
+            color: var(--ink-soft);
+            font-weight: 600;
+        }
+        .bd .v {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--ink);
+            margin-top: 6px;
+        }
+        .bd .v small {
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .detail {
+            margin-top: 16px;
+            text-align: left;
+            font-size: 14px;
+            color: var(--ink-soft);
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 16px;
+            border: 1.5px solid var(--line);
+        }
+        .detail div {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .detail div span:last-child {
+            color: var(--ink);
+            font-weight: 700;
+        }
+        .detail .hl span:last-child {
+            color: var(--brand-deep);
+        }
+
+        .disclaimer {
+            margin-top: 18px;
+            background: #FDECEC;
+            border: 2.5px solid var(--danger);
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            text-align: left;
+        }
+        .disclaimer .ic {
+            font-size: 22px;
+            flex: none;
+            line-height: 1.3;
+        }
+        .disclaimer p {
+            margin: 0;
+            color: var(--danger);
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.6;
+        }
+
+        .foot {
+            text-align: center;
+            font-size: 13px;
+            color: var(--ink-soft);
+            margin-top: 26px;
+            line-height: 1.8;
+        }
+        .foot .org {
+            font-weight: 800;
+            color: var(--brand-deep);
+            font-size: 14px;
+        }
+
+        .yunnan-deco {
+            text-align: center;
+            margin: 12px 0 4px;
+            opacity: .5;
+            font-size: 13px;
+            letter-spacing: 6px;
+            color: var(--brand);
+        }
+        .yunnan-deco::before,
+        .yunnan-deco::after {
+            content: "〰";
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <img class="mascot" src="https://aka.doubaocdn.com/s/KVjA1woydi" alt="西山居保小助">
+
+    <div class="header">
+        <!-- 顶部标识：昆明 · 西山 → 昆明市西山区 -->
+        <span class="badge">昆明市西山区</span>
+        <h1>城乡居民养老待遇计算器</h1>
+        <p>测算 60 周岁起，每月可领取的养老金</p>
+    </div>
+
+    <div class="wrap">
+        <div class="yunnan-deco">滇池夕阳 老有所养</div>
+
+        <div class="tabs">
+            <div class="tab active" id="tabA" onclick="switchMode('A')">统一档次</div>
+            <div class="tab" id="tabB" onclick="switchMode('B')">逐年缴费</div>
+        </div>
+
+        <!-- ========== 模式A：统一档次 ========== -->
+        <div class="card" id="modeA">
+            <div class="field">
+                <label>缴费档次 <span class="hint">每人每年缴费金额</span></label>
+                <div class="select-wrap">
+                    <select id="tierA"></select>
+                </div>
+                <div class="warn-note"><span class="star">*</span>中断性补缴不享受政府补贴</div>
+            </div>
+
+            <div class="field">
+                <label>累计缴费年限 <span class="hint">最少 1 年起</span></label>
+                <div class="stepper">
+                    <button type="button" onclick="stepYear(-1)">−</button>
+                    <input type="number" id="yearsA" value="15" min="1" max="45" inputmode="numeric" onchange="syncSubYears()">
+                    <button type="button" onclick="stepYear(1)">＋</button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>社会资助 <span class="hint">集体/社会各界资助</span></label>
+                <div class="radio-row">
+                    <div class="rbtn active" id="subA_no" onclick="setSubsidyA(false)">无</div>
+                    <div class="rbtn" id="subA_yes" onclick="setSubsidyA(true)">有</div>
+                </div>
+                <div class="subsidy-panel" id="subPanelA">
+                    <div class="s-title">社会资助设置（全部计入个人账户）</div>
+                    <div class="sub-field">
+                        <div class="sublabel">资助档次</div>
+                        <div class="select-wrap">
+                            <select id="subTierA"></select>
+                        </div>
+                    </div>
+                    <div class="sub-field">
+                        <div class="sublabel">资助年限 <span class="hint" style="font-size:12px;">可少于缴费年限</span></div>
+                        <div class="stepper">
+                            <button type="button" onclick="stepSubYear(-1)">−</button>
+                            <input type="number" id="subYearsA" value="15" min="1" max="45" inputmode="numeric">
+                            <button type="button" onclick="stepSubYear(1)">＋</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="calcA()">开 始 测 算</button>
+        </div>
+
+        <!-- ========== 模式B：逐年缴费 ========== -->
+        <div class="card" id="modeB" style="display:none;">
+            <div class="yr-head">
+                <span class="ttl">逐年缴费记录</span>
+                <span class="cnt">共 <b id="yrCount">15</b> 年（最少 1 年起）</span>
+            </div>
+
+            <div class="quick-bar">
+                <div class="qcol">
+                    <div class="qname">缴费档次（批量）</div>
+                    <div class="select-wrap">
+                        <select id="quickTier"></select>
+                    </div>
+                </div>
+                <div class="qcol">
+                    <div class="qname">社会资助（批量）</div>
+                    <div class="select-wrap">
+                        <select id="quickSub"></select>
+                    </div>
+                </div>
+                <button class="qbtn" onclick="applyQuick()">全部套用</button>
+            </div>
+            <div class="warn-note"><span class="star">*</span>中断性补缴不享受政府补贴</div>
+
+            <div class="yr-list" id="yrList"></div>
+
+            <div class="yr-actions">
+                <button type="button" onclick="addYear()">＋ 增加一年</button>
+                <button type="button" onclick="removeYear()">− 删除末年</button>
+            </div>
+            <button class="btn" style="margin-top:16px;" onclick="calcB()">开 始 测 算</button>
+        </div>
+
+        <!-- ========== 结果 ========== -->
+        <div class="result" id="result">
+            <div class="result-card">
+                <div class="rt">预计每月可领取养老金</div>
+                <div class="big" id="totalMonth">0<small>元/月</small></div>
+                <div class="yr-total">约合每年 <b id="totalYear">0</b> 元 · 已累计缴费 <b id="totalYears">15</b> 年</div>
+
+                <div class="breakdown">
+                    <div class="bd">
+                        <div class="k">基础养老金</div>
+                        <div class="v" id="basePart">0<small>元</small></div>
+                    </div>
+                    <div class="bd">
+                        <div class="k">个人账户养老金</div>
+                        <div class="v" id="accPart">0<small>元</small></div>
+                    </div>
+                </div>
+
+                <div class="detail">
+                    <div><span>个人账户累计储存额</span><span id="accTotal">0 元</span></div>
+                    <div><span>其中 · 个人缴费合计</span><span id="feeTotal">0 元</span></div>
+                    <div><span>其中 · 政府补贴合计</span><span id="govTotal">0 元</span></div>
+                    <div class="hl"><span>其中 · 社会资助合计</span><span id="socialTotal">0 元</span></div>
+                    <div><span>个人账户养老金（÷139 个月）</span><span id="accMonth">0 元</span></div>
+                    <div><span>长缴多得加发（超 15 年每年 +2 元）</span><span id="longBonus">0 元</span></div>
+                </div>
+
+                <div class="disclaimer">
+                    <span class="ic">⚠️</span>
+                    <p>测算结果仅作预估参考，养老金最终发放结果以社保部门核定为准</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="foot">
+            <div class="org">昆明市西山区城乡居民社会养老保险局</div>
+            <div>基础养老金 194 元/月 · 计发月数 139 · 未计利息</div>
+            <div>咨询电话：68046970 / 68046907 / 68158378</div>
+        </div>
+    </div>
+
+    <script>
+        // 18个缴费档次及政府补贴（元/年）
+        var TIERS = [
+            { fee: 300, sub: 35 },
+            { fee: 400, sub: 40 },
+            { fee: 500, sub: 60 },
+            { fee: 600, sub: 72 },
+            { fee: 700, sub: 84 },
+            { fee: 800, sub: 96 },
+            { fee: 900, sub: 108 },
+            { fee: 1000, sub: 120 },
+            { fee: 1500, sub: 180 },
+            { fee: 2000, sub: 240 },
+            { fee: 3000, sub: 240 },
+            { fee: 4000, sub: 240 },
+            { fee: 5000, sub: 240 },
+            { fee: 6000, sub: 240 },
+            { fee: 7000, sub: 240 },
+            { fee: 8000, sub: 240 },
+            { fee: 9000, sub: 240 },
+            { fee: 10000, sub: 240 }
+        ];
+        // 社会资助18档（300-10000元）
+        var SOCIAL_TIERS = [300, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+            10000
+        ];
+
+        var BASE_PENSION = 194;
+        var MONTHS = 139;
+        var LONG_BONUS = 2;
+        // 取消最低15年限制：最小值改为 1
+        var MIN_YEARS = 1;
+
+        var subA = false; // 统一档次-社会资助开关
+
+        // ===== 工具函数 =====
+        function fmt(n) { return (Math.round(n * 100) / 100).toLocaleString('zh-CN', { maximumFractionDigits: 2 }); }
+
+        function tierOptions() {
+            return TIERS.map(function(t, i) {
+                return '<option value="' + i + '">' + t.fee + ' 元/年（政府补 ' + t.sub + ' 元）</option>';
+            }).join('');
+        }
+
+        function socialOptions() {
+            return SOCIAL_TIERS.map(function(v, i) {
+                return '<option value="' + i + '">' + v + ' 元/年</option>';
+            }).join('');
+        }
+        // 逐年模式用：含"无"选项的社会资助下拉
+        function socialOptionsWithNone() {
+            var html = '<option value="-1">无社会资助</option>';
+            SOCIAL_TIERS.forEach(function(v, i) {
+                html += '<option value="' + i + '">资助 ' + v + ' 元/年</option>';
+            });
+            return html;
+        }
+
+        // ===== 初始化下拉 =====
+        document.getElementById('tierA').innerHTML = tierOptions();
+        document.getElementById('quickTier').innerHTML = tierOptions();
+        document.getElementById('subTierA').innerHTML = socialOptions();
+        document.getElementById('quickSub').innerHTML = socialOptionsWithNone();
+        document.getElementById('tierA').value = 8;
+        document.getElementById('quickTier').value = 8;
+        document.getElementById('subTierA').value = 3;
+        document.getElementById('quickSub').value = -1;
+
+        // ===== 统一档次：社会资助开关 =====
+        function setSubsidyA(on) {
+            subA = on;
+            document.getElementById('subA_no').classList.toggle('active', !on);
+            document.getElementById('subA_yes').classList.toggle('active', on);
+            document.getElementById('subPanelA').classList.toggle('show', on);
+            if (on) {
+                var y = parseInt(document.getElementById('yearsA').value || '15', 10);
+                document.getElementById('subYearsA').value = y;
+                document.getElementById('subYearsA').max = y;
+            }
+        }
+
+        // ===== 统一档次：缴费年限步进 =====
+        function stepYear(d) {
+            var el = document.getElementById('yearsA');
+            var v = parseInt(el.value || '15', 10) + d;
+            if (v < MIN_YEARS) v = MIN_YEARS;
+            if (v > 45) v = 45;
+            el.value = v;
+            syncSubYears();
+        }
+        // 资助年限上限跟随缴费年限
+        function syncSubYears() {
+            var payY = parseInt(document.getElementById('yearsA').value || '15', 10);
+            var subEl = document.getElementById('subYearsA');
+            var subY = parseInt(subEl.value || '15', 10);
+            subEl.max = payY;
+            if (subY > payY) subEl.value = payY;
+        }
+        // 资助年限步进
+        function stepSubYear(d) {
+            var el = document.getElementById('subYearsA');
+            var max = parseInt(el.max || '15', 10);
+            var v = parseInt(el.value || '1', 10) + d;
+            if (v < 1) v = 1;
+            if (v > max) v = max;
+            el.value = v;
+        }
+
+        // ===== 逐年数据 =====
+        var yrData = [];
+        var yrSubData = [];
+        // 初始化时仍然创建 15 条记录（保持原有体验），但 MIN_YEARS 已改为 1，用户可删减
+        for (var i = 0; i < 15; i++) {
+            yrData.push(8);
+            yrSubData.push(-1);
+        }
+
+        function renderYrList() {
+            var html = yrData.map(function(v, i) {
+                var sv = yrSubData[i];
+                return '<div class="yr-row">' +
+                    '<div class="no">第 <b>' + (i + 1) + '</b> 年</div>' +
+                    '<div class="yrcol">' +
+                    '<div class="yname">缴费档次</div>' +
+                    '<div class="select-wrap"><select onchange="yrData[' + i + ']=+this.value">' +
+                    TIERS.map(function(t, j) { return '<option value="' + j + '"' + (j == v ? ' selected' : '') + '>' +
+                            t.fee + ' 元（补 ' + t.sub + '）</option>'; }).join('') +
+                    '</select></div>' +
+                    '</div>' +
+                    '<div class="yrcol">' +
+                    '<div class="yname">社会资助</div>' +
+                    '<div class="select-wrap"><select onchange="yrSubData[' + i + ']=+this.value">' +
+                    '<option value="-1"' + (sv == -1 ? ' selected' : '') + '>无</option>' +
+                    SOCIAL_TIERS.map(function(s, j) { return '<option value="' + j + '"' + (j == sv ? ' selected' : '') +
+                            '>' + s + ' 元</option>'; }).join('') +
+                    '</select></div>' +
+                    '</div>' +
+                    '<button class="del" onclick="delYear(' + i + ')" title="删除该年">×</button>' +
+                    '</div>';
+            }).join('');
+            document.getElementById('yrList').innerHTML = html;
+            document.getElementById('yrCount').textContent = yrData.length;
+        }
+
+        function addYear() {
+            var lastTier = yrData.length ? yrData[yrData.length - 1] : 8;
+            var lastSub = yrSubData.length ? yrSubData[yrSubData.length - 1] : -1;
+            yrData.push(lastTier);
+            yrSubData.push(lastSub);
+            renderYrList();
+        }
+
+        function removeYear() {
+            if (yrData.length <= MIN_YEARS) { alert('逐年缴费记录最少 1 年起，不能再减少。'); return; }
+            yrData.pop();
+            yrSubData.pop();
+            renderYrList();
+        }
+
+        function delYear(i) {
+            if (yrData.length <= MIN_YEARS) { alert('逐年缴费记录最少 1 年起，不能删除。'); return; }
+            yrData.splice(i, 1);
+            yrSubData.splice(i, 1);
+            renderYrList();
+        }
+
+        function applyQuick() {
+            var tv = +document.getElementById('quickTier').value;
+            var sv = +document.getElementById('quickSub').value;
+            for (var i = 0; i < yrData.length; i++) { yrData[i] = tv;
+                yrSubData[i] = sv; }
+            renderYrList();
+        }
+        renderYrList();
+
+        // ===== 模式切换 =====
+        function switchMode(m) {
+            document.getElementById('tabA').classList.toggle('active', m == 'A');
+            document.getElementById('tabB').classList.toggle('active', m == 'B');
+            document.getElementById('modeA').style.display = m == 'A' ? 'block' : 'none';
+            document.getElementById('modeB').style.display = m == 'B' ? 'block' : 'none';
+            document.getElementById('result').classList.remove('show');
+        }
+
+        // ===== 核心计算 =====
+        function showResult(feeTotal, govTotal, socialTotal, years) {
+            var accTotal = feeTotal + govTotal + socialTotal;
+            var accMonth = accTotal / MONTHS;
+            var longBonus = Math.max(0, years - 15) * LONG_BONUS;
+            var basePart = BASE_PENSION + longBonus;
+            var total = basePart + accMonth;
+
+            document.getElementById('totalMonth').innerHTML = fmt(total) + '<small>元/月</small>';
+            document.getElementById('totalYear').textContent = fmt(total * 12);
+            document.getElementById('totalYears').textContent = years;
+            document.getElementById('basePart').innerHTML = fmt(basePart) + '<small>元</small>';
+            document.getElementById('accPart').innerHTML = fmt(accMonth) + '<small>元</small>';
+            document.getElementById('accTotal').textContent = fmt(accTotal) + ' 元';
+            document.getElementById('feeTotal').textContent = fmt(feeTotal) + ' 元';
+            document.getElementById('govTotal').textContent = fmt(govTotal) + ' 元';
+            document.getElementById('socialTotal').textContent = fmt(socialTotal) + ' 元';
+            document.getElementById('accMonth').textContent = fmt(accMonth) + ' 元';
+            document.getElementById('longBonus').textContent = (longBonus > 0 ? '+' : '') + fmt(longBonus) + ' 元';
+
+            document.getElementById('result').classList.add('show');
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // 统一档次计算
+        function calcA() {
+            var t = TIERS[+document.getElementById('tierA').value];
+            var years = parseInt(document.getElementById('yearsA').value || '15', 10);
+            if (years < MIN_YEARS) { alert('累计缴费年限最少 1 年起。'); return; }
+
+            var socialAmt = 0;
+            if (subA) {
+                var subTier = SOCIAL_TIERS[+document.getElementById('subTierA').value];
+                var subYears = parseInt(document.getElementById('subYearsA').value || '0', 10);
+                socialAmt = subTier * subYears;
+            }
+            showResult(t.fee * years, t.sub * years, socialAmt, years);
+        }
+
+        // 逐年计算
+        function calcB() {
+            if (yrData.length < MIN_YEARS) { alert('逐年缴费记录最少 1 年起。'); return; }
+            var feeTotal = 0,
+                govTotal = 0,
+                socialTotal = 0;
+            for (var i = 0; i < yrData.length; i++) {
+                feeTotal += TIERS[yrData[i]].fee;
+                govTotal += TIERS[yrData[i]].sub;
+                if (yrSubData[i] >= 0) {
+                    socialTotal += SOCIAL_TIERS[yrSubData[i]];
+                }
+            }
+            showResult(feeTotal, govTotal, socialTotal, yrData.length);
+        }
+    </script>
+</body>
+</html>
